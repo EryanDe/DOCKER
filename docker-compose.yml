@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:latest
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    env_file:
+      - .env
+    volumes:
+      - ./data:/var/lib/mysql
+    networks:
+      - backend
+
+  bff:
+    image: hamza3991/bffapp:latest
+    ports:
+      - "8080:8080"  # Correction du port du service BFF
+    environment:
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    depends_on:
+      - mariadb
+    networks:
+      - backend
+  
+  front:
+    image: hamza3991/frontapp
+    ports:
+      - "8083:80"  # Correction du port du service front
+    environment:
+      - BFF_URL=http://bff:80  # Mise à jour de l'URL du BFF
+    networks:
+      - backend
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      - PMA_HOST=mariadb
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "8081:80"
+    depends_on:
+      - mariadb
+    networks:
+      - backend
+
+networks:
+  backend:
